@@ -7,9 +7,11 @@ using namespace std;
 
 #define RECORDSPERBUCKET 2
 #define MAXKEYLENGTH 8
-#define MAXKEYVALUE (int)(pow(2,MAXKEYLENGTH)-1)
+#define MAXKEYVALUE (int)(pow(2,MAXKEYLENGTH)-1) //255
+#define EXTENTION_LIMIT 5
 
 struct DataItem {
+	//valid  = 1 --> DataItem contains valid data
 	int valid; //0--> IF INVALID,  1 --> if valid
 	int data;  //data value
 	int key;   //key value
@@ -30,7 +32,8 @@ struct DataItem {
 
 struct Bucket {
 	int localDepth;
-	int currentEntries;   //number of valid entries
+	//number of valid entries
+	int currentEntries;   
 	struct DataItem  dataItem[RECORDSPERBUCKET];
 	Bucket() {
 		currentEntries = 0;

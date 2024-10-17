@@ -127,7 +127,31 @@ int getCurrentHash(int key, int depth) {
 
 int insertItemIntoBucket(Bucket& currentBucket, DataItem data)
 {
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	{
+		if (currentBucket.dataItem[i].valid)
+		{
+			continue;
+		}
+		currentBucket.dataItem[i] = data;
+		currentBucket.currentEntries++;
+		currentBucket.dataItem[i].valid = 1;
+		return 1;
+	}
 	return 0;
+	
+
+	// int hashedKey=getCurrentHash(data.key,currentBucket.localDepth);
+	// if(!currentBucket.dataItem[hashedKey].valid) {
+	// 	currentBucket.dataItem[hashedKey].data=data;
+	// 	currentBucket.dataItem[hashedKey].valid=true; 
+	// 	currentBucket.currentEntries++;
+	// 	return 1;
+	// }
+	// else {
+	// 	return 0; 
+	// } 
+	
 }
 
 //TODO2: Implement this function, Don't change the interface please
@@ -138,7 +162,17 @@ int insertItemIntoBucket(Bucket& currentBucket, DataItem data)
 
 void findItemInBucket(Bucket& currentBucket, int key)
 {
-
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	{
+		if (currentBucket.dataItem[i].key == key && currentBucket.dataItem[i].valid == 1)
+		{
+			displayItem(currentBucket.dataItem[i])
+			return;
+		}
+		return 
+	}
+	displayNotFound(key)
+	return;
 }
 
 
@@ -151,6 +185,15 @@ void findItemInBucket(Bucket& currentBucket, int key)
 
 int deleteItemFromBucket(Bucket& currentBucket, int key)
 {
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	{
+		if (currentBucket.dataItem[i].key == key && currentBucket.dataItem[i].valid == 1)
+		{
+			currentBucket.dataItem[i].valid = 0;
+			currentBucket.currentEntries--;
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -178,12 +221,22 @@ int insertItem(DataItem data, Bucket& currentBucket, GlobalDirectory& globaldire
 			return 1; //successfully inserted;
 		}
 	}
-	// complete the rest of the function ....
-	
-
-
+	int hashedKey = getCurrentHash(data.key,globaldirectory.globalDepth);
+	int extentionTimes=0;
+	while(!insertItemIntoBucket(globaldirectory.entry[hashedKey], data))
+	{ 
+		if (globaldirectory.globalDepth > globaldirectory.entry[hashedKey]->localDepth)
+		{
+			//split bucket and insert and return
+		}
+		if(extentionTimes==EXTENTION_LIMIT)
+			return 0;
+		if(!extendDirectory(globaldirectory,hashedKey))
+			return 0;
+		hashedKey = getCurrentHash(data.key,globaldirectory.globalDepth);
+		extentionTimes++;
+	} 
 }
-
 //TODO5: Implement this function, Don't change the interface please
 // functionlity: search the directory for an item using the key
 // return:   nothing
@@ -191,9 +244,31 @@ int insertItem(DataItem data, Bucket& currentBucket, GlobalDirectory& globaldire
 // Hint1:   use findItemInBucket & getCurrentHash functions
 
 void searchItem(int key, Bucket& currentBucket, GlobalDirectory& globaldirectory) {
-
+	if(!globaldirectory.globalDepth) 
+	{   findItemInBucket(currentBucket,key);
+		return;
+	}
+	int hashedKey = getCurrentHash(data.key,globaldirectory.globalDepth);
+	findItemInBucket( globaldirectory.entry[hashedKey],key);
+	return;
 }
+//helper function : split and re 
+void splitBucket(GlobalDirectory &globaldirectory,int splitIndex) {
+	DataItem dataItems [RECORDSPERBUCKET];
+	//create a new bucket with the same increased local depth 
+	Bucket *firstBucket=new Bucket(globaldirectory.entry[splitIndex]->localDepth+1);
+	Bucket *secondBucket=new Bucket(globaldirectory.entry[splitIndex]->localDepth+1);
+	//we want to delete the old bucket and re distrbute the data 
+	//for every data item in a bucket , delete it 
+	
+	
+	//now both buckets have increased local depth by one . 
+	//loop over data in the previous bucket , calculate its new hash
 
+
+	
+	
+}
 //TODO6: Implement this function, Don't change the interface please
 // functionlity: search on an item based on the key and delete it.
 // return:   1 if succedded
@@ -206,7 +281,15 @@ void searchItem(int key, Bucket& currentBucket, GlobalDirectory& globaldirectory
 // Hint4: You might want to loop on checkDirectoryMinimization, not just call it once to continue merging
 
 int deleteItem(int key, Bucket& currentBucket, GlobalDirectory& globaldirectory) {
-	return 0;
+
+	if(!globaldirectory.globalDepth) 
+	{   if(!deleteItemFromBucket(currentBucket,key))
+		return 0;
+		else
+		return 1;
+	}
+	int hashedKey = getCurrentHash(data.key,globaldirectory.globalDepth);
+	return deleteItemFromBucket(globaldirectory.entry[hashedKey],key);
 
 }
 
@@ -244,10 +327,95 @@ int createFirstTimeDirectory(GlobalDirectory& globaldirectory, Bucket& currentBu
 // Hint2:   what is the size of the new directory compared to old one? what is the new depth?
 // Hint3:   some entries will point to the same bucket
 int extendDirectory(GlobalDirectory &globaldirectory,int splitIndex) {
-	
+	globaldirectory.globalDepth++;
+	if (globaldirectory.globaDepth > MAXKEYLENGTH)
+	{
+		return 0;
+	}
+	globaldirectory.length = globaldirectory.length * 2;
+	Bucket ** prevEntry = globaldirectory.entry;
+	globaldirectory.entry = new Bucket * [globaldirectory.length];
+	for (int i = 0; i < globaldirectory.length; i++)
+	{
+		int mask = pow(2,globaldirectory.globalDepth-1);
+		int	oldIndex = i & mask;
+		globaldirectory.entry[i] = prevEntry[oldIndex];
+	}
+	delete[] prevEntry; 
+	//At split index me7tageen ne loop over the items in the bucket to redistribute the data to the new bucket
+	int newDepth = globaldirectory.entry[splitIndex]->localDepth++;
+	int newSplitIndex = splitIndex + pow(2,globaldirectory.globalDepth-); // ya3ni 01 3yzen ne add one more bucket 101 
+	globaldirectory.entry[newSplitIndex] = new Bucket(newDepth);
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	{
+		int newKey = getCurrentHash(globaldirectory.entry[splitIndex]->dataItem[i].key,globaldirectory.globalDepth);
+		if (newKey == -1)
+		{
+			//TODO: When might this fail
+			return 0;
+		}
+		if (newKey != splitIndex)
+		{
+			int isSuccess = insertItemIntoBucket(globaldirectory.entry[newSplitIndex], globaldirectory.entry[splitIndex]->dataItem[i]);
+			if (!isSuccess)
+			{
+				//TODO: When might this fail?
+				return 0;
+			}
+			globaldirectory.entry[splitIndex]->dataItem[i].valid = 0;
+			globaldirectory.entry[splitIndex]->currentEntries--;
+		}
+	}
 	return 1;
 }
 
+// for (int i = 0; i < globaldirectory.length; i++)
+// {
+// 	// d = 3 
+// 	// 000 - 111
+// 	// new d = 4 , mask = 111
+// 	// 0000 - 0111 --> 000 - 111
+// 	// 1000 - 1111 --> 000 - 111
+// 	// 0000 = 000
+// 	// 0101 = 101
+
+// 	// First half:
+// 	// 0000 -> 000
+// 	// 0101 -> 101
+
+// 	// Second half:
+// 	// 1000 -> 000
+// 	// 1101 -> 101
+
+// 	int mask = pow(2,globaldirectory.globalDepth-1);
+// 	int	oldIndex = i & mask;
+// 	// int oldIndex = i ;
+// 	if ( i > globaldirectory.length << 1 ) 
+// 	{
+// 		// d = 3
+// 		// 111
+// 		// d = 5
+// 		// 11111
+// 		// 
+// 		//prevGlobalDepth = 111
+// 		// 111 & ay 7aga = last 3 bits in ay 7aga
+
+// 		//prevGlobalDepth = 11111
+// 		// 11111 & ay 7aga = last 5 bits in ay 7aga
+		
+// 	}
+// 	globaldirectory.entry[i] = prevEntry[oldIndex];
+// }
+//copilot :
+int removeMSB(int value) {
+	// in binar 0111 1111 1111 1111 1111 1111 1111 0101
+	// out =    0101 0000 0000 0000
+    int mask = 0x7FFFFFFF; // Mask with all bits set to 1 except the MSB
+
+	//globalDepth before incrementing
+	value << (sizeof(int)*8 - globaldirectory.globalDepth) >> (sizeof(int) - globaldirectory.globalDepth );
+    return value & mask;
+}
 
 
 //If all buckets have depth less than global depth,
