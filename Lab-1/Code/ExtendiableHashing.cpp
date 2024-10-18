@@ -16,7 +16,8 @@ void displayItem(DataItem *dataItem)
 {
 	if (dataItem != 0 && dataItem->valid)
 	{
-		std::cout << "\t\t\t key: " << std::bitset<8>(dataItem->key) << "\t value:\t" << dataItem->data << std::endl;
+		std::cout << "\t\t\t key: " << dataItem->key << "\t value:\t" << dataItem->data << std::endl;
+		// std::cout << "\t\t\t key: " << std::bitset<8>(dataItem->key) << "\t value:\t" << dataItem->data << std::endl;
 	}
 	else
 	{
@@ -50,7 +51,8 @@ void displayBucket(Bucket &currentBucket, string &depths, string &values, int ve
 				values.append(std::to_string(currentBucket.dataItem[i].data));
 				values.append(",");
 				if (verbose)
-					std::cout << "\t\t\t key: " << std::bitset<8>(currentBucket.dataItem[i].key) << "\t value:\t" << currentBucket.dataItem[i].data << std::endl;
+					std::cout << "\t\t\t key: " << currentBucket.dataItem[i].key << "\t value:\t" << currentBucket.dataItem[i].data << std::endl;
+				// std::cout << "\t\t\t key: " << std::bitset<8>(currentBucket.dataItem[i].key) << "\t value:\t" << currentBucket.dataItem[i].data << std::endl;
 			}
 			else
 			{
@@ -76,7 +78,7 @@ void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, i
 	{
 		count++;
 		std::cout << "\tNo Directory yet\n";
-		std::cout << "before display bucket in length = 0";
+		// std::cout << "before display bucket in length = 0";
 		displayBucket(currentBucket, depths, values, verbose);
 	}
 	else
@@ -94,8 +96,9 @@ void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, i
 					count++;
 			}
 			if (verbose)
+				// std::cout << "\t key: " << i << "\t value:\t" << globaldirectory.entry[i] << std::endl;
 				std::cout << "\t key: " << std::bitset<8>(i) << "\t value:\t" << globaldirectory.entry[i] << std::endl;
-			std::cout << "before display bucket in length > 0";
+			// std::cout << "before display bucket in length > 0";
 			displayBucket(*globaldirectory.entry[i], depths, values, verbose);
 			if (verbose)
 				std::cout << "-----------------------------------------------\n\n";
@@ -381,20 +384,20 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 			return 1; // successfully inserted;
 		}
 	}
-	std::cout << "After creating directory \n";
+	// std::cout << "After creating directory \n";
 	int hashedKey = getCurrentHash(data.key, globaldirectory.globalDepth);
 	int extentionTimes = 0;
 	// As long as the bucket we attempt to insert into is full we will extend the directory and attempt to insert again
 	// TODO: Refactor 2 insertItemIntoBucket calls into one call
 	while (!insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 	{
-		std::cout << "Inside outer while loop in insertItem \n";
-		std::cout << " local depth of hashkey is " << globaldirectory.entry[hashedKey]->localDepth << "and global depth is " << globaldirectory.globalDepth << std::endl;
+		// std::cout << "Inside outer while loop in insertItem \n";
+		// std::cout << " local depth of hashkey is " << globaldirectory.entry[hashedKey]->localDepth << "and global depth is " << globaldirectory.globalDepth << std::endl;
 		// If local depth is smaller than global depth, we don't need to extend the directory yet
 		// We will attempt to split the full bucket and redistribute the data until the local depth matches the global depth
 		while (globaldirectory.globalDepth > globaldirectory.entry[hashedKey]->localDepth)
 		{
-			std::cout << "Inside inner while loop in InsertItem" << std::endl;
+			// std::cout << "Inside inner while loop in InsertItem" << std::endl;
 			splitBucketAndRedistribute(globaldirectory, hashedKey);
 			if (insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 			{
@@ -506,17 +509,19 @@ int createFirstTimeDirectory(GlobalDirectory &globaldirectory, Bucket &currentBu
 // TODO: Add a func to display all buckets in a directory and their contents
 void displayBuckets(const GlobalDirectory &globaldirectory)
 {
+	cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n";
+	cout << "Global depth: " << globaldirectory.globalDepth << endl;
 	for (int i = 0; i < globaldirectory.length; ++i)
 	{
 		Bucket *currentBucket = globaldirectory.entry[i];
 		if (currentBucket != nullptr)
 		{
-			cout << "Bucket " << i << " (Local Depth: " << currentBucket->localDepth << "): ";
+			cout << "\t Bucket " << std::bitset<8>(i) << " (Local Depth: " << currentBucket->localDepth << "): ";
 			for (int j = 0; j < RECORDSPERBUCKET; ++j)
 			{
 				if (currentBucket->dataItem[j].valid)
 				{
-					cout << "[Key: " << currentBucket->dataItem[j].key << ", Data: " << currentBucket->dataItem[j].data << "] ";
+					cout << "[Key: " << std::bitset<8>(currentBucket->dataItem[j].key) << "," << currentBucket->dataItem[j].key << ", Data: " << currentBucket->dataItem[j].data << "] ";
 				}
 			}
 			cout << endl;
@@ -541,6 +546,7 @@ void displayBuckets(const GlobalDirectory &globaldirectory)
 //  Hint3:   some entries will point to the same bucket
 int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 {
+	// displayBuckets(globaldirectory);
 	globaldirectory.globalDepth++;
 	if (globaldirectory.globalDepth > MAXKEYLENGTH)
 	{
@@ -553,11 +559,15 @@ int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 	{
 		// msk = 1, glo
 		int mask = pow(2, globaldirectory.globalDepth - 1) - 1; // This mask is least signifcant maybe?
+		mask = mask << 1;
 		int oldIndex = i & mask;
+		oldIndex = oldIndex >> 1;
 		globaldirectory.entry[i] = prevEntry[oldIndex];
 	}
-	displayBuckets(globaldirectory);
+	// displayBuckets(globaldirectory);
 	delete[] prevEntry;
+	cout << "After extending directory" << endl;
+	// displayBuckets(globaldirectory);
 
 	// HEBAAAAAAA MARKER
 	return splitBucketAndRedistribute(globaldirectory, splitIndex);
