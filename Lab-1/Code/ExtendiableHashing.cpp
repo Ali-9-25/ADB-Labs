@@ -206,37 +206,42 @@ int deleteItemFromBucket(Bucket &currentBucket, int key)
 //			0 if failed
 int redistrubteBucket(GlobalDirectory &globaldirectory, int distributeIndex)
 {
+
+	// distributeIndex = awel index fel nos el ta7tany ely feha el data
 	// HEBAAAAAAA MARKER
-	Bucket *tempBucket = globaldirectory.entry[distributeIndex];
-	globaldirectory.entry[distributeIndex] = new Bucket(globaldirectory.entry[distributeIndex]->localDepth);
+
 	// This loop redistributes the data in the old bucket to the new buckets
-	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	for (int i = 0; i < globaldirectory.entry[distributeIndex]->currentEntries; i++)
 	{
-		int key = getCurrentHash(tempBucket->dataItem[i].key, globaldirectory.globalDepth);
+		int key = getCurrentHash(globaldirectory.entry[distributeIndex]->dataItem[i].key, globaldirectory.globalDepth);
 		if (key == -1)
 		{
 			return 0;
 		}
-		int isSuccess = insertItemIntoBucket(*globaldirectory.entry[key], tempBucket->dataItem[i]);
-		if (!isSuccess)
+		// If key in the upper half (which points at the new empty bucket) then I should insert it in the new bucket
+		if (key < distributeIndex)
 		{
-			// isSucess should never be false since I am attempting to distrubute RECORDSPERBUCKET items among 2 buckets
-			// Worst case is one of the buckets ends up being full (but it should never overflow)
-			return 0;
+			deleteItemFromBucket(*globaldirectory.entry[distributeIndex], key);
+			int isSuccess = insertItemIntoBucket(*globaldirectory.entry[key], globaldirectory.entry[distributeIndex]->dataItem[i]);
+			if (!isSuccess)
+			{
+				// isSucess should never be false since I am attempting to distrubute RECORDSPERBUCKET items among 2 buckets
+				// Worst case is one of the buckets ends up being full (but it should never overflow)
+				return 0;
+			}
 		}
+		// Else if key is in the bottom half then I shouldnt move it
 	}
-	delete tempBucket;
 	return 1;
 }
 
 // Helper function
 // Functionality: Split bucket at split index and adjust bucket pointers in the global directory
 // Input: globaldirectory, splitIndex (the index of the bucket to be split)
-// Return :	1 if succedded
-//			0 if failed
 // HEBAAAAAAA MARKER
+// Return :	Index of first bucket in the bottom half of the split bucket (the half that still points at the old data)
 // TODO: When might this function fail? Add return 0 for failure
-// TODO: Retest this function when global index = split index (i.e when we are extending the directory), it should not work
+// TODO: Retest this function when global depth = local depth (i.e when we are extending the directory), it should not work
 int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 {
 	// HEBAAAAAAA MARKER
@@ -247,6 +252,7 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 	// Why shift max by global - local? For example if global = 5 and local = 2.
 	// Then the bucketKey would represent the 2 MSB/left most bits of a 5 bit number. Meaning the mask we need to use is 11000
 	// The current mask we have is 11 so we need to shift it to the left
+	// shiftedMask = 11000
 	// // bucketIndex = 010
 	int bucketIndex = splitIndex & shiftedMask; // Extracting the indices/keys represented by the bucket
 	// Why? We would like to find out which keys belong to our split bucket. Since local depth = 2, we know it will be one of the following:
@@ -257,7 +263,26 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 	// etc
 	// Assume splitIndex = 9/01001, then bucketIndex = 01000 (notice that the 2 left most bits/ the $localDepth left most bits represent the keys in our bucket)
 	// int newBucketIndex = bucketIndex + 1; // Finding index of the new bucket
+	// initial index = 01000, 01011
+
+	// Assume bucket Index =  01000
+	// if split index between 01000 and 01011 then it will no longer point at the old data
+	// Since we change pointers whose index is between 01000 and 01011
+	// if split index between 01100 and 01111 then it will still point at the old data
+	globaldirectory.entry[bucketIndex] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
+	int index = bucketIndex;
+	for (int i = 1; i < pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); i++)
+	{
+		globaldirectory.entry[index + i] = globaldirectory.entry[index];
+	}
 	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
+	return newBucketIndex;
+
+	// bucketIndex = 01000
+	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
+	// 01xxx --> 010xx , 011xx
+	// 01000 --> 010 = bucketIndex
+	// 01000 --> 011 = bucketIndex + 2^ (globalDepth - localDepth -1)
 	// Now we know the leftmost $LocaDepth bits of bucketIndex represent the keys of the old bucket before splitting
 	// We would like to find the keys of the 2 new buckets after splitting.
 	// We know it will always be the leftmost $LocaDepth bits of newBucketIndex followed by 0 or 1 then the remaining bits (according to our global depth)
@@ -270,19 +295,34 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 	// then shifting right by local depth
 	globaldirectory.entry[splitIndex]->localDepth++;
 
+	// 01000 , 01100
 	// Now before all 01xxx pointers pointed to the same bucket
 	// Now we would like 010xx pointers to point to the same bucket and 011xx pointers to point at a different bucket
 	// We can achieve this by leaving the 010xx pointers unchanged
 	// Then for any pointer whose index is 011xx we would like to make it point at the new bucket
 	int newMask = pow(2, globaldirectory.entry[splitIndex]->localDepth) - 1;
 	int newShiftedMask = newMask << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
+	// newShiftedMask = 11100
 	// This shiftedMask will extract the 3 left most bits eg in this example newShiftedMask = 11100
 	// Inside the loop we will check if the 3 left most bits of the bucket index match newBucketIndex i.e 011 then we will make it point at the new bucket
+
+	// // Supposedly better implementation
+	// globaldirectory.entry[newBucketIndex] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
+	// int index = newBucketIndex;
+	// for (int i = 1; i < pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); i++)
+	// {
+	// 	globaldirectory.entry[index + i] = globaldirectory.entry[index];
+	// }
+
+	// start from 01000 a
+	// 01000 --> 01011
+	// OR 01100 --> 01111
 
 	// This loop creates the new bucket and adjusts the pointers of the global directory accordingly
 	for (int i = 0; i < globaldirectory.length; i++)
 	{
-		// 0100
+		// 011xxx
+		// newShiftedMask = 11100
 		int bucketKey = i & newShiftedMask; // In this example extracts the 3 left most bits of the bucket index
 		// int shiftedBucketIndex = i >> (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
 		// This condition translates to if the $localDepth+1 left most bits of the bucket index match newBucketIndex i.e if the 3 left most bits match 011
@@ -311,12 +351,8 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 int splitBucketAndRedistribute(GlobalDirectory &globaldirectory, int splitIndex)
 {
 	// HEBAAAAAAA MARKER
-	int isSuccess = splitBucketAli(globaldirectory, splitIndex);
-	if (!isSuccess)
-	{
-		return 0;
-	}
-	return redistrubteBucket(globaldirectory, splitIndex);
+	int bucketIndex = splitBucketAli(globaldirectory, splitIndex);
+	return redistrubteBucket(globaldirectory, bucketIndex);
 }
 
 // TODO4: Implement this function, Don't change the interface please
@@ -345,7 +381,8 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 	}
 	int hashedKey = getCurrentHash(data.key, globaldirectory.globalDepth);
 	int extentionTimes = 0;
-	// As long as the bucket we attempt to insert into is full we will extend the directoryand attempt to insert again
+	// As long as the bucket we attempt to insert into is full we will extend the directory and attempt to insert again
+	// TODO: Refactor 2 insertItemIntoBucket calls into one call
 	while (!insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 	{
 		// HEBAAAAAAA MARKER
@@ -425,7 +462,17 @@ int deleteItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory)
 			return 1;
 	}
 	int hashedKey = getCurrentHash(key, globaldirectory.globalDepth);
-	return deleteItemFromBucket(*globaldirectory.entry[hashedKey], key);
+	if (!deleteItemFromBucket(*globaldirectory.entry[hashedKey], key))
+	{
+		return 1;
+	}
+	// While loop since we may need to merge bucket multiple times
+	while (globaldirectory.entry[hashedKey]->currentEntries == 0)
+	{
+		// TODO: check if we need to merge, if so merge
+
+		hashedKey = getCurrentHash(key, globaldirectory.globalDepth);
+	}
 }
 
 // create  the first directory, this might help you to implement extendDirectory
@@ -571,9 +618,9 @@ int checkDirectoryMinimization(GlobalDirectory &globaldirectory)
 	// all are smaller than localdepth, initiate minimization
 	//  this is actually too stupid, it should be at least half empty to initiate minimization
 	//  but we will keep it like that for simplicity
+	// Ali: Makes sense since if the directory is more than half full, splitting the capacity by half will obviously be invalid. But if we are sure that all buckets have depth smaller than global depth, doesnt this already imply that the directory is less than half full?
 	int oldGlobalDepth, oldLength;
 	Bucket **oldEntry;
-
 	oldGlobalDepth = globaldirectory.globalDepth;
 	oldLength = globaldirectory.length;
 	globaldirectory.globalDepth -= 1;
