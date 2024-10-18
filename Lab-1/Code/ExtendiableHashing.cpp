@@ -76,6 +76,7 @@ void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, i
 	{
 		count++;
 		std::cout << "\tNo Directory yet\n";
+		std::cout << "before display bucket in length = 0";
 		displayBucket(currentBucket, depths, values, verbose);
 	}
 	else
@@ -94,6 +95,7 @@ void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, i
 			}
 			if (verbose)
 				std::cout << "\t key: " << std::bitset<8>(i) << "\t value:\t" << globaldirectory.entry[i] << std::endl;
+			std::cout << "before display bucket in length > 0";
 			displayBucket(*globaldirectory.entry[i], depths, values, verbose);
 			if (verbose)
 				std::cout << "-----------------------------------------------\n\n";
@@ -279,7 +281,7 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 	return newBucketIndex;
 
 	// bucketIndex = 01000
-	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
+	// int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
 	// 01xxx --> 010xx , 011xx
 	// 01000 --> 010 = bucketIndex
 	// 01000 --> 011 = bucketIndex + 2^ (globalDepth - localDepth -1)
@@ -379,17 +381,20 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 			return 1; // successfully inserted;
 		}
 	}
+	std::cout << "After creating directory \n";
 	int hashedKey = getCurrentHash(data.key, globaldirectory.globalDepth);
 	int extentionTimes = 0;
 	// As long as the bucket we attempt to insert into is full we will extend the directory and attempt to insert again
 	// TODO: Refactor 2 insertItemIntoBucket calls into one call
 	while (!insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 	{
-		// HEBAAAAAAA MARKER
+		std::cout << "Inside outer while loop in insertItem \n";
+		std::cout << " local depth of hashkey is " << globaldirectory.entry[hashedKey]->localDepth << "and global depth is " << globaldirectory.globalDepth << std::endl;
 		// If local depth is smaller than global depth, we don't need to extend the directory yet
 		// We will attempt to split the full bucket and redistribute the data until the local depth matches the global depth
 		while (globaldirectory.globalDepth > globaldirectory.entry[hashedKey]->localDepth)
 		{
+			std::cout << "Inside inner while loop in InsertItem" << std::endl;
 			splitBucketAndRedistribute(globaldirectory, hashedKey);
 			if (insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 			{
@@ -478,6 +483,7 @@ int deleteItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory)
 // create  the first directory, this might help you to implement extendDirectory
 int createFirstTimeDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket)
 {
+	std::cout << "first time creating directory";
 	globaldirectory.globalDepth = 1;
 	globaldirectory.length = 2;
 	globaldirectory.entry = new Bucket *[globaldirectory.length];
@@ -496,6 +502,28 @@ int createFirstTimeDirectory(GlobalDirectory &globaldirectory, Bucket &currentBu
 	}
 	return 1;
 }
+
+// TODO: Add a func to display all buckets in a directory and their contents
+void displayBuckets(const GlobalDirectory &globaldirectory)
+{
+	for (int i = 0; i < globaldirectory.length; ++i)
+	{
+		Bucket *currentBucket = globaldirectory.entry[i];
+		if (currentBucket != nullptr)
+		{
+			cout << "Bucket " << i << " (Local Depth: " << currentBucket->localDepth << "): ";
+			for (int j = 0; j < RECORDSPERBUCKET; ++j)
+			{
+				if (currentBucket->dataItem[j].valid)
+				{
+					cout << "[Key: " << currentBucket->dataItem[j].key << ", Data: " << currentBucket->dataItem[j].data << "] ";
+				}
+			}
+			cout << endl;
+		}
+	}
+}
+
 // In global directory: 010 points at a bucket whose index is 01
 // key = 01000000 local depth = 2 , hashed key = 01
 // key = 01000000 local depth = 3 , hashed key = 010
@@ -523,11 +551,14 @@ int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 	globaldirectory.entry = new Bucket *[globaldirectory.length];
 	for (int i = 0; i < globaldirectory.length; i++)
 	{
-		int mask = pow(2, globaldirectory.globalDepth - 1); // This mask is least signifcant maybe?
+		// msk = 1, glo
+		int mask = pow(2, globaldirectory.globalDepth - 1) - 1; // This mask is least signifcant maybe?
 		int oldIndex = i & mask;
 		globaldirectory.entry[i] = prevEntry[oldIndex];
 	}
+	displayBuckets(globaldirectory);
 	delete[] prevEntry;
+
 	// HEBAAAAAAA MARKER
 	return splitBucketAndRedistribute(globaldirectory, splitIndex);
 

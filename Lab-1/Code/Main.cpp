@@ -24,31 +24,31 @@ int main()
 {
 
     double score = 0.0;
-
     // Initialize File
     GlobalDirectory globalDirectory;
     Bucket initialFile;
     // Empty Directory
-    displayDirectory(globalDirectory, initialFile, 1);
+    // displayDirectory(globalDirectory, initialFile, 1);
     //============================================================
-
     // test insertion without making extra directory
     insertItem(DataItem(13, 33), initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0);
+    // displayDirectory(globalDirectory, initialFile, 1);
     //============================================================
     // search
     searchItem(13, initialFile, globalDirectory);
     // delete item
     // deleteItem(13, initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0);
+    // displayDirectory(globalDirectory, initialFile, 1);
     //============================================================
 
     ////////////////////////////////////////////////////////////
 
-    insertItem(DataItem(1, 20), initialFile, globalDirectory);
+    insertItem(DataItem(1, 20), initialFile, globalDirectory); // hna mafesh directory
+    // displayDirectory(globalDirectory, initialFile, 1);
     insertItem(DataItem(2, 70), initialFile, globalDirectory);
+    displayDirectory(globalDirectory, initialFile, 1); // hna fe directory , global = 1
     insertItem(DataItem(42, 11), initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0);
+    displayDirectory(globalDirectory, initialFile, 1);
     //============================================================
     insertItem(DataItem(112, 54), initialFile, globalDirectory);
     insertItem(DataItem(240, 16), initialFile, globalDirectory);
