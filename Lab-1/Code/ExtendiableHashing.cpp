@@ -196,6 +196,7 @@ int deleteItemFromBucket(Bucket &currentBucket, int key)
 	{
 		if (currentBucket.dataItem[i].key == key && currentBucket.dataItem[i].valid == 1)
 		{
+			cout << "Found item to be deleted, " << "key:" << currentBucket.dataItem[i].key << endl;
 			currentBucket.dataItem[i].valid = 0;
 			currentBucket.currentEntries--;
 			return 1;
@@ -213,28 +214,39 @@ int redistrubteBucket(GlobalDirectory &globaldirectory, int distributeIndex)
 {
 
 	// distributeIndex = awel index fel nos el ta7tany ely feha el data
-	// HEBAAAAAAA MARKER
-
+	// cout << "distribute index: " << distributeIndex << endl;
 	// This loop redistributes the data in the old bucket to the new buckets
-	for (int i = 0; i < globaldirectory.entry[distributeIndex]->currentEntries; i++)
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
 	{
-		int key = getCurrentHash(globaldirectory.entry[distributeIndex]->dataItem[i].key, globaldirectory.globalDepth);
-		if (key == -1)
+
+		// cout << "current entries = " << globaldirectory.entry[distributeIndex]->currentEntries << endl;
+		if (!globaldirectory.entry[distributeIndex]->dataItem[i].valid)
 		{
+			continue;
+		}
+		int key = globaldirectory.entry[distributeIndex]->dataItem[i].key;
+		int keyHash = getCurrentHash(globaldirectory.entry[distributeIndex]->dataItem[i].key, globaldirectory.globalDepth);
+		// cout << "key: " << keyHash << endl;
+		if (keyHash == -1)
+		{
+			// cout << "return after keyHash == -1, key =" << key << endl;
 			return 0;
 		}
 		// If key in the upper half (which points at the new empty bucket) then I should insert it in the new bucket
-		if (key < distributeIndex)
+		if (keyHash < distributeIndex)
 		{
+			// cout << "Attempting to delete item with key:" << key << endl;
 			deleteItemFromBucket(*globaldirectory.entry[distributeIndex], key);
-			int isSuccess = insertItemIntoBucket(*globaldirectory.entry[key], globaldirectory.entry[distributeIndex]->dataItem[i]);
+			int isSuccess = insertItemIntoBucket(*globaldirectory.entry[keyHash], globaldirectory.entry[distributeIndex]->dataItem[i]);
 			if (!isSuccess)
 			{
 				// isSucess should never be false since I am attempting to distrubute RECORDSPERBUCKET items among 2 buckets
 				// Worst case is one of the buckets ends up being full (but it should never overflow)
+				// cout << "return after insert" << endl;
 				return 0;
 			}
 		}
+		// cout << "End of loop, i = " << i << endl;
 		// Else if key is in the bottom half then I shouldnt move it
 	}
 	return 1;
@@ -251,15 +263,19 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 {
 	// HEBAAAAAAA MARKER
 	// Assume global depth = 5 and local depth = 2
+	// global = 2, local = 1
 	int mask = pow(2, globaldirectory.entry[splitIndex]->localDepth) - 1; // Mask which consists of ones from right to left whose count is equal to the local depth of the bucket
 	// mask = 11
+	// mask = 1
 	int shiftedMask = mask << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); // Shifting mask to left since we would like to extract MSB not LSB
 	// Why shift max by global - local? For example if global = 5 and local = 2.
 	// Then the bucketKey would represent the 2 MSB/left most bits of a 5 bit number. Meaning the mask we need to use is 11000
 	// The current mask we have is 11 so we need to shift it to the left
 	// shiftedMask = 11000
+	// shiftedMask = 10
 	// // bucketIndex = 010
 	int bucketIndex = splitIndex & shiftedMask; // Extracting the indices/keys represented by the bucket
+	// bucket = 00
 	// Why? We would like to find out which keys belong to our split bucket. Since local depth = 2, we know it will be one of the following:
 	// 00, 01, 10, 11
 	// If splitIndex is 00xxx then it'll be 00
@@ -270,20 +286,27 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 	// int newBucketIndex = bucketIndex + 1; // Finding index of the new bucket
 	// initial index = 01000, 01011
 
+	// bucketIndex = 00
+
 	// Assume bucket Index =  01000
 	// if split index between 01000 and 01011 then it will no longer point at the old data
 	// Since we change pointers whose index is between 01000 and 01011
 	// if split index between 01100 and 01111 then it will still point at the old data
+	globaldirectory.entry[splitIndex]->localDepth++;
 	globaldirectory.entry[bucketIndex] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
 	int index = bucketIndex;
-	for (int i = 1; i < pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); i++)
+	int half = pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
+	cout << "half = " << half << endl;
+	for (int i = 1; i < half; i++)
 	{
+		cout << "I am in split loop" << endl;
 		globaldirectory.entry[index + i] = globaldirectory.entry[index];
 	}
-	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
+	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth)); // Finding index of the new bucket
 	return newBucketIndex;
 
 	// bucketIndex = 01000
+	// bucketIndex = 00
 	// int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
 	// 01xxx --> 010xx , 011xx
 	// 01000 --> 010 = bucketIndex
@@ -357,7 +380,11 @@ int splitBucketAndRedistribute(GlobalDirectory &globaldirectory, int splitIndex)
 {
 	// HEBAAAAAAA MARKER
 	int bucketIndex = splitBucketAli(globaldirectory, splitIndex);
-	return redistrubteBucket(globaldirectory, bucketIndex);
+	// displayBuckets(globaldirectory);
+	int x = redistrubteBucket(globaldirectory, bucketIndex);
+	// cout << "After redistribution: \n";
+	// displayBuckets(globaldirectory);
+	return x;
 }
 
 // TODO4: Implement this function, Don't change the interface please

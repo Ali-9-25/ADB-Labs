@@ -54,38 +54,41 @@ int main()
     // displayDirectory(globalDirectory, initialFile, 1);
     //============================================================
     insertItem(DataItem(112, 54), initialFile, globalDirectory);
+    insertItem(DataItem(240, 40), initialFile, globalDirectory);
+    insertItem(DataItem(32, 39), initialFile, globalDirectory);
+    insertItem(DataItem(113, 45), initialFile, globalDirectory);
     displayBuckets(globalDirectory);
-    insertItem(DataItem(240, 16), initialFile, globalDirectory);
-    insertItem(DataItem(241, 99), initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    //============================================================
-    insertItem(DataItem(159, 30), initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    //============================================================
+    // insertItem(DataItem(240, 16), initialFile, globalDirectory);
+    // insertItem(DataItem(241, 99), initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // //============================================================
+    // insertItem(DataItem(159, 30), initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // //============================================================
 
-    insertItem(DataItem(14, 45), initialFile, globalDirectory);
-    insertItem(DataItem(13, 88), initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    //============================================================
-    insertItem(DataItem(37, 1), initialFile, globalDirectory);
-    searchItem(13, initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    //============================================================
-    // deleteItem(14, initialFile, globalDirectory);
-    // deleteItem(13, initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    //============================================================
-    insertItem(DataItem(158, 5), initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
-    insertItem(DataItem(3, 9), initialFile, globalDirectory);
-    // displayBuckets(globalDirectory);
-    // displayDirectory(globalDirectory, initialFile, 0);
+    // insertItem(DataItem(14, 45), initialFile, globalDirectory);
+    // insertItem(DataItem(13, 88), initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // //============================================================
+    // insertItem(DataItem(37, 1), initialFile, globalDirectory);
+    // searchItem(13, initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // //============================================================
+    // // deleteItem(14, initialFile, globalDirectory);
+    // // deleteItem(13, initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // //============================================================
+    // insertItem(DataItem(158, 5), initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
+    // insertItem(DataItem(3, 9), initialFile, globalDirectory);
+    // // displayBuckets(globalDirectory);
+    // // displayDirectory(globalDirectory, initialFile, 0);
 
     return 0;
 }
