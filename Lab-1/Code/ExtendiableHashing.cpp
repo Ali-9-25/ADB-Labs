@@ -308,7 +308,7 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 // Input: globaldirectory, splitIndex (the index of the bucket to be split)
 // Return :	1 if succedded
 //			0 if failed
-int splitAndRedistributeBucket(GlobalDirectory &globaldirectory, int splitIndex)
+int splitBucketAndRedistribute(GlobalDirectory &globaldirectory, int splitIndex)
 {
 	// HEBAAAAAAA MARKER
 	int isSuccess = splitBucketAli(globaldirectory, splitIndex);
@@ -353,7 +353,7 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 		// We will attempt to split the full bucket and redistribute the data until the local depth matches the global depth
 		while (globaldirectory.globalDepth > globaldirectory.entry[hashedKey]->localDepth)
 		{
-			splitAndRedistributeBucket(globaldirectory, hashedKey);
+			splitBucketAndRedistribute(globaldirectory, hashedKey);
 			if (insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
 			{
 				return 1;
@@ -416,7 +416,7 @@ void splitBucket(GlobalDirectory &globaldirectory, int splitIndex)
 //  Hint4: You might want to loop on checkDirectoryMinimization, not just call it once to continue merging
 int deleteItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory)
 {
-
+	// Corner case: if no directory yet
 	if (!globaldirectory.globalDepth)
 	{
 		if (!deleteItemFromBucket(currentBucket, key))
@@ -482,7 +482,7 @@ int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 	}
 	delete[] prevEntry;
 	// HEBAAAAAAA MARKER
-	return splitAndRedistributeBucket(globaldirectory, splitIndex);
+	return splitBucketAndRedistribute(globaldirectory, splitIndex);
 
 	// Old Implementation:
 	//  int shiftedNewBucketIndex = newBucketIndex << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); // Shifting bucket index since bucket index is in MSB not LSB form
