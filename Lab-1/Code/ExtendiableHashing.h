@@ -66,7 +66,7 @@ struct GlobalDirectory
 
 void displayItem(DataItem *dataItem);
 void displayBucket(Bucket &currentBucket, string &depths, string &values, int verbose);
-void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, int verbose);
+void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, int verbose, std::ofstream &file);
 
 int getCurrentHash(int key, int depth);
 

@@ -1,5 +1,6 @@
 
 #include "ExtendiableHashing.h"
+#include <fstream>
 #include <bitset>
 #include <iostream>
 #include <cmath>
@@ -67,23 +68,25 @@ void displayBucket(Bucket &currentBucket, string &depths, string &values, int ve
 	values.append("]");
 }
 
-void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, int verbose)
+void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, int verbose, std::ofstream &file)
 {
 	std::cout << "Directory:\t global depth:" << globaldirectory.globalDepth << std::endl;
+	file << "Directory:\t global depth:" << globaldirectory.globalDepth << std::endl;
+
 	string values = "(";
 	string depths = "(";
 	int count = 0;
-	// string locations = "(";
+
 	if (globaldirectory.length == 0)
 	{
 		count++;
 		std::cout << "\tNo Directory yet\n";
-		// std::cout << "before display bucket in length = 0";
+		file << "\tNo Directory yet\n";
+
 		displayBucket(currentBucket, depths, values, verbose);
 	}
 	else
 	{
-
 		for (int i = 0; i < globaldirectory.length; i++)
 		{
 			if (i == 0)
@@ -96,27 +99,86 @@ void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, i
 					count++;
 			}
 			if (verbose)
-				// std::cout << "\t key: " << i << "\t value:\t" << globaldirectory.entry[i] << std::endl;
+			{
 				std::cout << "\t key: " << std::bitset<8>(i) << "\t value:\t" << globaldirectory.entry[i] << std::endl;
-			// std::cout << "before display bucket in length > 0";
+				file << "\t key: " << std::bitset<8>(i) << "\t value:\t" << globaldirectory.entry[i] << std::endl;
+			}
 			displayBucket(*globaldirectory.entry[i], depths, values, verbose);
 			if (verbose)
+			{
 				std::cout << "-----------------------------------------------\n\n";
+				file << "-----------------------------------------------\n\n";
+			}
 		}
-		// values.pop_back();
 		depths.pop_back();
 	}
 
 	values.append(")");
 	depths.append(")");
-	std::cout << " buckets:\t" << count << "/" << globaldirectory.length << endl;
-	std::cout << "values:\t" << values << endl;
-	std::cout << "depths:\t" << depths << endl;
+
+	std::cout << " buckets:\t" << count << "/" << globaldirectory.length << std::endl;
+	file << " buckets:\t" << count << "/" << globaldirectory.length << std::endl;
+
+	std::cout << "values:\t" << values << std::endl;
+	file << "values:\t" << values << std::endl;
+
+	std::cout << "depths:\t" << depths << std::endl;
+	file << "depths:\t" << depths << std::endl;
+
 	std::cout << "=========================\n";
-	// std::cout << "Press any key to continue\n";
-	char t[100];
-	// std::cin >> t;
+	file << "=========================\n";
 }
+
+// void displayDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket, int verbose, std::ofstream &file)
+// {
+// 	std::cout << "Directory:\t global depth:" << globaldirectory.globalDepth << std::endl;
+// 	string values = "(";
+// 	string depths = "(";
+// 	int count = 0;
+// 	// string locations = "(";
+// 	if (globaldirectory.length == 0)
+// 	{
+// 		count++;
+// 		std::cout << "\tNo Directory yet\n";
+// 		// std::cout << "before display bucket in length = 0";
+// 		displayBucket(currentBucket, depths, values, verbose);
+// 	}
+// 	else
+// 	{
+
+// 		for (int i = 0; i < globaldirectory.length; i++)
+// 		{
+// 			if (i == 0)
+// 			{
+// 				count++;
+// 			}
+// 			else
+// 			{
+// 				if (globaldirectory.entry[i - 1] != globaldirectory.entry[i])
+// 					count++;
+// 			}
+// 			if (verbose)
+// 				// std::cout << "\t key: " << i << "\t value:\t" << globaldirectory.entry[i] << std::endl;
+// 				std::cout << "\t key: " << std::bitset<8>(i) << "\t value:\t" << globaldirectory.entry[i] << std::endl;
+// 			// std::cout << "before display bucket in length > 0";
+// 			displayBucket(*globaldirectory.entry[i], depths, values, verbose);
+// 			if (verbose)
+// 				std::cout << "-----------------------------------------------\n\n";
+// 		}
+// 		// values.pop_back();
+// 		depths.pop_back();
+// 	}
+
+// 	values.append(")");
+// 	depths.append(")");
+// 	std::cout << " buckets:\t" << count << "/" << globaldirectory.length << endl;
+// 	std::cout << "values:\t" << values << endl;
+// 	std::cout << "depths:\t" << depths << endl;
+// 	std::cout << "=========================\n";
+// 	// std::cout << "Press any key to continue\n";
+// 	char t[100];
+// 	// std::cin >> t;
+// }
 
 // Hashing function and getting directory Index, please don't change this function
 int getCurrentHash(int key, int depth)
@@ -476,6 +538,49 @@ void splitBucket(GlobalDirectory &globaldirectory, int splitIndex)
 	// loop over data in the previous bucket , calculate its new hash
 }
 
+// Merge all items in bucket B into bucket A
+void mergeBucket(GlobalDirectory &globaldirectory, int indexA, int indexB)
+{
+	// Loop over all items in bucket B and insert them into A
+	for (int i = 0; i < RECORDSPERBUCKET; i++)
+	{
+		if (globaldirectory.entry[indexB]->dataItem[i].valid == 1)
+		{
+			insertItemIntoBucket(*globaldirectory.entry[indexA], globaldirectory.entry[indexB]->dataItem[i]);
+		}
+	}
+	// for (int i = 0; i < globaldirectory.length; i++)
+	// {
+	// 	if (globaldirectory.entry[i] == globaldirectory.entry[indexB])
+	// 	{
+	// 	}
+	// }
+	// Have the half that pointed at B, now point at A
+	int half = pow(2, globaldirectory.globalDepth - globaldirectory.entry[indexB]->localDepth);
+	for (int i = 0; i < half; i++)
+	{
+		globaldirectory.entry[indexB + i] = globaldirectory.entry[indexA];
+	}
+	globaldirectory.entry[indexA]->localDepth--;
+	// delete globaldirectory.entry[indexB];
+}
+
+bool shouldMerge(GlobalDirectory &globaldirectory, int hashedKey)
+{
+	// hashedKey = 001
+	// new local = 2
+	int newLocal = globaldirectory.entry[hashedKey]->localDepth - 1;
+	// mask = 11
+	int mask = pow(2, newLocal) - 1;
+	// mask = 110
+	int shiftedMask = mask << (globaldirectory.globalDepth - newLocal);
+	// bucketIndex = 000
+	int bucketIndex = hashedKey & shiftedMask;
+	// neighborBucketIndex = 001
+	int neighborBucketIndex = bucketIndex + pow(2, globaldirectory.globalDepth - (newLocal + 1));
+	return (globaldirectory.entry[neighborBucketIndex]->currentEntries + globaldirectory.entry[bucketIndex]->currentEntries <= RECORDSPERBUCKET);
+}
+
 // TODO6: Implement this function, Don't change the interface please
 //  functionlity: search on an item based on the key and delete it.
 //  return:   1 if succedded
@@ -499,14 +604,73 @@ int deleteItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory)
 	int hashedKey = getCurrentHash(key, globaldirectory.globalDepth);
 	if (!deleteItemFromBucket(*globaldirectory.entry[hashedKey], key))
 	{
-		return 1;
+		return 0;
 	}
-	// While loop since we may need to merge bucket multiple times
-	while (globaldirectory.entry[hashedKey]->currentEntries == 0)
-	{
-		// TODO: check if we need to merge, if so merge
 
+	// While loop since we may need to merge bucket multiple times
+	// TODO: What is condition for merging?
+	// Condition: If the bucket is less than or equal half full then I should check the adjacent bucket for merging
+	// Why? If bucket is more than half full and I am sure the other adjacent bucket is at least half full then (0.5 + x) > 1 where x > 0.5
+	// Why ceil? If RECORDSPERBUCKET = 3, and bucket A has 3 record and bucket B has 1 record
+	// If we delete an item from bucket A then should should merge with bucket B even though bucket A will more than half (3/2)
+	// If RECORDSPERBUCKET = 6
+	// If bucket A has 5 records and bucket B has 2 records
+	// If we delete an item from bucket A then A has 4 records then we should merge even though A isnt half full
+	// (bucketA.currentEntries + bucketB.currententries) <= RECORDSPERBUCKET
+	// while (globaldirectory.entry[hashedKey]->currentEntries <= ceil(RECORDSPERBUCKET / 2))
+	// {
+	// 	// TODO: check if we need to merge, if so merge
+
+	// 	checkDirectoryMinimization(globaldirectory);
+	// 	hashedKey = getCurrentHash(key, globaldirectory.globalDepth);
+	// }
+
+	while (shouldMerge(globaldirectory, hashedKey))
+	{
+		cout << "??????????????????????????" << endl;
+		cout << "Trying to merge hashed key:" << hashedKey << endl;
+		cout << "??????????????????????????" << endl;
+		int newLocal = globaldirectory.entry[hashedKey]->localDepth - 1;
+		int mask = pow(2, newLocal) - 1;
+		int shiftedMask = mask << (globaldirectory.globalDepth - newLocal);
+		int bucketIndex = hashedKey & shiftedMask;
+		int neighborBucketIndex = bucketIndex + pow(2, globaldirectory.globalDepth - (newLocal + 1));
+		mergeBucket(globaldirectory, bucketIndex, neighborBucketIndex);
+		checkDirectoryMinimization(globaldirectory);
 		hashedKey = getCurrentHash(key, globaldirectory.globalDepth);
+	}
+	return 1;
+	// If global = 3, local = 3
+	// If global = 3, local = 2
+	// In other words pointer 000 points at 000 and pointer 001 points at 001
+	// In other words pointers of 000,001 point at bucket 00 and 010,011 point at bucket 01
+	// We would like to check law han merge 000 and 001
+	// We would like to check law han merge 00 and 01
+	// hashedKey = 001
+	// hashedKey = 011
+	// I deleted from bucket 001
+	// I deleted from bucket 01
+	// oldHashedKey = 01
+	// Loop over kol el buckets, awel mala2y wa7d el 2 leftmost bits beto3o be 01 ha2ol en da match
+	// newLocal = 2
+	// newLocal = 1
+	int newLocal = globaldirectory.entry[hashedKey]->localDepth - 1;
+	// mask = 11
+	// mask = 1
+	int mask = pow(2, newLocal) - 1;
+	// shiftedMask = 110
+	// shiftedMask = 100
+	int shiftedMask = mask << (globaldirectory.globalDepth - newLocal);
+	// bucketIndex = 000
+	// bucketIndex = 000
+	int bucketIndex = hashedKey & shiftedMask;
+	// NeighborBucketIndex = 001
+	// NeighborBucketIndex = 010
+	int neighborBucketIndex = bucketIndex + pow(2, globaldirectory.globalDepth - newLocal);
+	if (globaldirectory.entry[neighborBucketIndex]->currentEntries + globaldirectory.entry[bucketIndex]->currentEntries <= RECORDSPERBUCKET)
+	{
+		mergeBucket(globaldirectory, bucketIndex, neighborBucketIndex);
+		checkDirectoryMinimization(globaldirectory);
 	}
 }
 
@@ -656,18 +820,6 @@ int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 //  Last 3 bits in new index == old index
 // 	globaldirectory.entry[i] = prevEntry[oldIndex];
 // }
-
-// copilot :
-int removeMSB(int value, GlobalDirectory &globaldirectory)
-{
-	// in binar 0111 1111 1111 1111 1111 1111 1111 0101
-	// out =    0101 0000 0000 0000
-	int mask = 0x7FFFFFFF; // Mask with all bits set to 1 except the MSB
-
-	// globalDepth before incrementing
-	value << (sizeof(int) * 8 - globaldirectory.globalDepth) >> (sizeof(int) - globaldirectory.globalDepth);
-	return value & mask;
-}
 
 // If all buckets have depth less than global depth,
 //  compress the directory depth by one
