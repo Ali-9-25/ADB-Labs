@@ -200,6 +200,12 @@ int insertItemIntoBucket(Bucket &currentBucket, DataItem data)
 {
 	for (int i = 0; i < RECORDSPERBUCKET; i++)
 	{
+		if (currentBucket.dataItem[i].key == data.key)
+		{
+			// If 2 items with the same key are inserted, then behavior of deletion and search will be ambigious since I could match any of the duplicate entries
+			cout << "Key already exists, invalid insertion" << endl;
+			return 0;
+		}
 		if (currentBucket.dataItem[i].valid)
 		{
 			continue;
@@ -549,6 +555,7 @@ void mergeBucket(GlobalDirectory &globaldirectory, int indexA, int indexB)
 			insertItemIntoBucket(*globaldirectory.entry[indexA], globaldirectory.entry[indexB]->dataItem[i]);
 		}
 	}
+	delete globaldirectory.entry[indexB];
 	// for (int i = 0; i < globaldirectory.length; i++)
 	// {
 	// 	if (globaldirectory.entry[i] == globaldirectory.entry[indexB])
@@ -562,7 +569,6 @@ void mergeBucket(GlobalDirectory &globaldirectory, int indexA, int indexB)
 		globaldirectory.entry[indexB + i] = globaldirectory.entry[indexA];
 	}
 	globaldirectory.entry[indexA]->localDepth--;
-	// delete globaldirectory.entry[indexB];
 }
 
 bool shouldMerge(GlobalDirectory &globaldirectory, int hashedKey)
