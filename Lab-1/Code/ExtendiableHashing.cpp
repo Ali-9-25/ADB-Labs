@@ -328,39 +328,30 @@ int redistrubteBucket(GlobalDirectory &globaldirectory, int distributeIndex)
 // TODO: When might this function fail? Add return 0 for failure
 // TODO: Retest this function when global depth = local depth (i.e when we are extending the directory), it should not work
 int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
-{
-	// HEBAAAAAAA MARKER
-	// Assume global depth = 5 and local depth = 2
-	// global = 2, local = 1
+//split index is now 10 
+{	/*
+	^ index  	00 points to bucket [1,2]
+	^ index 	01 points to bucket [1,2]
+	^ index  	10 points to bucket [220,245]
+	^ index  	11 points to bucket [220,245]
+
+
+	^ insert 180 : 1011 0100
+	^ split index is now 1 which is no more correct since 00 and 01 points to [1,2] and i will split at index 10 
+
+   */
+  	cout<<"split index is now : "<<splitIndex<<endl; 
+	cout<<"global depth is now :"<<globaldirectory.globalDepth<<endl; 
 	int mask = pow(2, globaldirectory.entry[splitIndex]->localDepth) - 1; // Mask which consists of ones from right to left whose count is equal to the local depth of the bucket
-	// mask = 11
-	// mask = 1
 	int shiftedMask = mask << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); // Shifting mask to left since we would like to extract MSB not LSB
-	// Why shift max by global - local? For example if global = 5 and local = 2.
-	// Then the bucketKey would represent the 2 MSB/left most bits of a 5 bit number. Meaning the mask we need to use is 11000
-	// The current mask we have is 11 so we need to shift it to the left
-	// shiftedMask = 11000
-	// shiftedMask = 10
-	// // bucketIndex = 010
-	int bucketIndex = splitIndex & shiftedMask; // Extracting the indices/keys represented by the bucket
-	// bucket = 00
-	// Why? We would like to find out which keys belong to our split bucket. Since local depth = 2, we know it will be one of the following:
-	// 00, 01, 10, 11
-	// If splitIndex is 00xxx then it'll be 00
-	// If splitIndex is 01xxx then it'll be 01
-	// If splitIndex is 10xxx then it'll be 10
-	// etc
-	// Assume splitIndex = 9/01001, then bucketIndex = 01000 (notice that the 2 left most bits/ the $localDepth left most bits represent the keys in our bucket)
-	// int newBucketIndex = bucketIndex + 1; // Finding index of the new bucket
-	// initial index = 01000, 01011
-
-	// bucketIndex = 00
-
-	// Assume bucket Index =  01000
-	// if split index between 01000 and 01011 then it will no longer point at the old data
-	// Since we change pointers whose index is between 01000 and 01011
-	// if split index between 01100 and 01111 then it will still point at the old data
+	int bucketIndex= shiftedMask & splitIndex;//bucket index= splitIndex (1)-> 
+	cout<<"bucket index now is : "<<bucketIndex<<endl; 
+	//^ This line is totally incorrect 
 	globaldirectory.entry[splitIndex]->localDepth++;
+	/*
+	^ in case of inserting key 180 : 1011 0100
+	^ where the global depth is now 2 , the bucket index should be 10 , why its zero ?!!!! 
+	*/ 
 	globaldirectory.entry[bucketIndex] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
 	int index = bucketIndex;
 	int half = pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
@@ -371,72 +362,9 @@ int splitBucketAli(GlobalDirectory &globaldirectory, int splitIndex)
 		globaldirectory.entry[index + i] = globaldirectory.entry[index];
 	}
 	int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth)); // Finding index of the new bucket
+	//the one containg old data :
+	cout<<" the newBucket Index : containing old data is : "<<newBucketIndex<<endl ; 
 	return newBucketIndex;
-
-	// bucketIndex = 01000
-	// bucketIndex = 00
-	// int newBucketIndex = bucketIndex + pow(2, (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth - 1)); // Finding index of the new bucket
-	// 01xxx --> 010xx , 011xx
-	// 01000 --> 010 = bucketIndex
-	// 01000 --> 011 = bucketIndex + 2^ (globalDepth - localDepth -1)
-	// Now we know the leftmost $LocaDepth bits of bucketIndex represent the keys of the old bucket before splitting
-	// We would like to find the keys of the 2 new buckets after splitting.
-	// We know it will always be the leftmost $LocaDepth bits of newBucketIndex followed by 0 or 1 then the remaining bits (according to our global depth)
-	// In the example above it would be 01 followed by 0 or 1 followed by 00
-	// I.e 010000 and 011000
-	// Now the (localDepth + 1) left most bits of newBucketIndex represent the keys of the new buckets after splitting
-	// We clearly do not need to change bucketIndex to find the first key
-	// For the second key however we need to add a "1" whose position is to the right of the leftmost $localDepth bits
-	// You can think of this ones position being defined by shifting to the left by global depth - 1 to reach position of leftmost bit
-	// then shifting right by local depth
-	globaldirectory.entry[splitIndex]->localDepth++;
-
-	// 01000 , 01100
-	// Now before all 01xxx pointers pointed to the same bucket
-	// Now we would like 010xx pointers to point to the same bucket and 011xx pointers to point at a different bucket
-	// We can achieve this by leaving the 010xx pointers unchanged
-	// Then for any pointer whose index is 011xx we would like to make it point at the new bucket
-	int newMask = pow(2, globaldirectory.entry[splitIndex]->localDepth) - 1;
-	int newShiftedMask = newMask << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
-	// newShiftedMask = 11100
-	// This shiftedMask will extract the 3 left most bits eg in this example newShiftedMask = 11100
-	// Inside the loop we will check if the 3 left most bits of the bucket index match newBucketIndex i.e 011 then we will make it point at the new bucket
-
-	// // Supposedly better implementation
-	// globaldirectory.entry[newBucketIndex] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
-	// int index = newBucketIndex;
-	// for (int i = 1; i < pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); i++)
-	// {
-	// 	globaldirectory.entry[index + i] = globaldirectory.entry[index];
-	// }
-
-	// start from 01000 a
-	// 01000 --> 01011
-	// OR 01100 --> 01111
-
-	// This loop creates the new bucket and adjusts the pointers of the global directory accordingly
-	for (int i = 0; i < globaldirectory.length; i++)
-	{
-		// 011xxx
-		// newShiftedMask = 11100
-		int bucketKey = i & newShiftedMask; // In this example extracts the 3 left most bits of the bucket index
-		// int shiftedBucketIndex = i >> (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth);
-		// This condition translates to if the $localDepth+1 left most bits of the bucket index match newBucketIndex i.e if the 3 left most bits match 011
-		// Notice that first time this condition is true will be for the index 01100
-		if (bucketKey == newBucketIndex)
-		{
-			// We first need to create the new bucket
-			globaldirectory.entry[i] = new Bucket(globaldirectory.entry[splitIndex]->localDepth);
-			// Now remember that we need all the 011xx pointers to point at the same bucket not just 01100
-			// The number of dont cares on the right is equal to global depth - the new incremented local depth
-			// The number of buckets we need to loop over is pow(2, global depth - new local depth)
-			for (int j = 1; j < pow(2, globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); j++)
-			{
-				globaldirectory.entry[i + j] = globaldirectory.entry[i];
-			}
-			return 0; // Success
-		}
-	}
 }
 
 // Helper function
@@ -492,6 +420,10 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 		// We will attempt to split the full bucket and redistribute the data until the local depth matches the global depth
 		while (globaldirectory.globalDepth > globaldirectory.entry[hashedKey]->localDepth)
 		{
+			cout<<"inside while loop when inserting "<<data.key<< endl; 
+			cout<<"global depth now is :"<<globaldirectory.globalDepth<<endl; 
+			cout<<"local depth now is :"<<globaldirectory.entry[hashedKey]->localDepth<<endl; 
+
 			// std::cout << "Inside inner while loop in InsertItem" << std::endl;
 			splitBucketAndRedistribute(globaldirectory, hashedKey);
 			if (insertItemIntoBucket(*globaldirectory.entry[hashedKey], data))
@@ -503,7 +435,7 @@ int insertItem(DataItem data, Bucket &currentBucket, GlobalDirectory &globaldire
 		if (extentionTimes == EXTENTION_LIMIT)
 			return 0;
 		// Attempting to extend the directory (if successful, will split the full bucket and redistribute the data)
-		if (!extendDirectory(globaldirectory, hashedKey))
+		if (!extendDirectory(globaldirectory, hashedKey,data.key))
 			return 0;
 		// Getting new hashed key after incrementing the global depth
 		hashedKey = getCurrentHash(data.key, globaldirectory.globalDepth);
@@ -741,7 +673,7 @@ void displayBuckets(const GlobalDirectory &globaldirectory)
 //  Hint1:   don't forget todelete unneeded pointers to avoid memory leakage
 //  Hint2:   what is the size of the new directory compared to old one? what is the new depth?
 //  Hint3:   some entries will point to the same bucket
-int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
+int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex,int key)
 {
 	// displayBuckets(globaldirectory);
 	globaldirectory.globalDepth++;
@@ -766,8 +698,8 @@ int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex)
 	cout << "After extending directory" << endl;
 	// displayBuckets(globaldirectory);
 
-	// HEBAAAAAAA MARKER
-	return splitBucketAndRedistribute(globaldirectory, splitIndex);
+	// HEBAAAAAAA MARKER 
+	return splitBucketAndRedistribute(globaldirectory, getCurrentHash(key, globaldirectory.globalDepth));
 
 	// Old Implementation:
 	//  int shiftedNewBucketIndex = newBucketIndex << (globaldirectory.globalDepth - globaldirectory.entry[splitIndex]->localDepth); // Shifting bucket index since bucket index is in MSB not LSB form
