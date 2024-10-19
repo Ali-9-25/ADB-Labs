@@ -79,6 +79,6 @@ void searchItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory
 int deleteItem(int key, Bucket &currentBucket, GlobalDirectory &globaldirectory);
 
 int createFirstTimeDirectory(GlobalDirectory &globaldirectory, Bucket &currentBucket);
-int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex);
+int extendDirectory(GlobalDirectory &globaldirectory, int splitIndex,int key);
 int checkDirectoryMinimization(GlobalDirectory &globaldirectory);
 void displayBuckets(const GlobalDirectory &globaldirectory);

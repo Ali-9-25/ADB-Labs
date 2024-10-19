@@ -24,55 +24,40 @@ int main()
     // Initialize File
     GlobalDirectory globalDirectory;
     Bucket initialFile;
-    // Empty Directory
-    displayDirectory(globalDirectory, initialFile, 1, outFile);
-    //============================================================
-
-    // test insertion without making extra directory
-    insertItem(DataItem(13, 33), initialFile, globalDirectory);
+    // //^ Discussion Testcase 
+    insertItem(DataItem(220, 220), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    // search
-    searchItem(13, initialFile, globalDirectory);
-    // delete item
-    deleteItem(13, initialFile, globalDirectory);
+    insertItem(DataItem(245, 245), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-
-    ////////////////////////////////////////////////////////////
-
-    insertItem(DataItem(1, 20), initialFile, globalDirectory);
-    insertItem(DataItem(2, 70), initialFile, globalDirectory);
-    insertItem(DataItem(42, 11), initialFile, globalDirectory);
+    insertItem(DataItem(180, 180), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    insertItem(DataItem(112, 54), initialFile, globalDirectory);
-    insertItem(DataItem(240, 16), initialFile, globalDirectory);
-    insertItem(DataItem(241, 99), initialFile, globalDirectory);
+    insertItem(DataItem(255, 255), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    insertItem(DataItem(159, 30), initialFile, globalDirectory);
+    insertItem(DataItem(1, 1), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-
-    insertItem(DataItem(14, 45), initialFile, globalDirectory);
-    insertItem(DataItem(13, 88), initialFile, globalDirectory);
+    insertItem(DataItem(2, 2), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    insertItem(DataItem(37, 1), initialFile, globalDirectory);
-    searchItem(13, initialFile, globalDirectory);
+    insertItem(DataItem(127, 127), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    deleteItem(14, initialFile, globalDirectory);
-    deleteItem(13, initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0, outFile);
-    //============================================================
-    insertItem(DataItem(158, 5), initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0, outFile);
-    insertItem(DataItem(3, 9), initialFile, globalDirectory);
-    displayDirectory(globalDirectory, initialFile, 0, outFile);
-
-    // Close the file
+    //^ My TestCase 
+    //  cout<<"inserted 1"<<endl;
+    // insertItem(DataItem(1, 1), initialFile, globalDirectory);
+    // displayDirectory(globalDirectory, initialFile, 0, outFile);
+    // cout<<"inserted 2"<<endl;
+    // insertItem(DataItem(2, 2), initialFile, globalDirectory);
+    // displayDirectory(globalDirectory, initialFile, 0, outFile);
+    // cout<<"inserted 220"<<endl;
+    // insertItem(DataItem(220, 220), initialFile, globalDirectory);
+    // displayDirectory(globalDirectory, initialFile, 0, outFile);
+    // cout<<"inserted 245"<<endl;
+    // insertItem(DataItem(245, 245), initialFile, globalDirectory);
+    // displayDirectory(globalDirectory, initialFile, 0, outFile);
+    // cout<<"inserted 180"<<endl;
+    // insertItem(DataItem(180, 180), initialFile, globalDirectory);
+    // displayDirectory(globalDirectory, initialFile, 0, outFile);
+    // cout<<"inserted 225"<<endl;
+    // insertItem(DataItem(255, 255), initialFile, globalDirectory);
+   
     outFile.close();
 
     return 0;
