@@ -1,0 +1,7 @@
+Refactor the code. 
+Fix the memory leak.
+Test deleting entire directory.
+Test the testcases described in Mainv2.cpp.
+Shift after every deletion so that we ensure valid entries are sorted, that way we dont need to loop over entire bucket when splitting. Only loop over the current entries.
+Remove every pow and use bit manipulation instead eg pow(2, i) can be replaced by 1 << i.
+Ask farah what hint 1 in deleteItem func means.
