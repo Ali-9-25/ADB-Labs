@@ -13,7 +13,6 @@ int main()
 {
 
     double score = 0.0;
-    // Open the output file
     std::ofstream outFile("output.txt");
     if (!outFile)
     {
@@ -24,7 +23,6 @@ int main()
     // Initialize File
     GlobalDirectory globalDirectory;
     Bucket initialFile;
-    // //^ Discussion Testcase 
     insertItem(DataItem(220, 220), initialFile, globalDirectory);
     displayDirectory(globalDirectory, initialFile, 0, outFile);
     insertItem(DataItem(245, 245), initialFile, globalDirectory);
