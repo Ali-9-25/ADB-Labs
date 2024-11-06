@@ -141,6 +141,12 @@ int insertItemIntoBucket(Bucket &currentBucket, DataItem data)
 {
 	for (int i = 0; i < RECORDSPERBUCKET; i++)
 	{
+		if (currentBucket.dataItem[i].key == data.key)
+		{
+			// If 2 items with the same key are inserted, then behavior of deletion and search will be ambigious since I could match any of the duplicate entries
+			cout << "Key already exists, invalid insertion" << endl;
+			return 0;
+		}
 		if (currentBucket.dataItem[i].valid)
 		{
 			continue;
